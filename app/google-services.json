@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "710105366510",
+    "firebase_url": "https://trafik-578c7.firebaseio.com",
+    "project_id": "trafik-578c7",
+    "storage_bucket": "trafik-578c7.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:710105366510:android:c8d6b227664b6ca7",
+        "android_client_info": {
+          "package_name": "com.tramot.trafik"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "710105366510-0hsbeelnk65bpopuos5706na635bv30h.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.tramot.trafik",
+            "certificate_hash": "211bbf8d36ad3ca27eeb364523b1c09d2f38597c"
+          }
+        },
+        {
+          "client_id": "710105366510-91hl4dr8a7sc66p57hi5mst60u60q7mc.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCkHEiw_gZNdpvRcfsfjVtk9d7Ifo_wVcM"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "710105366510-91hl4dr8a7sc66p57hi5mst60u60q7mc.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
