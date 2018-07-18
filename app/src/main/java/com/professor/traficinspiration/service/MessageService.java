@@ -5,6 +5,10 @@ import android.os.AsyncTask;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 import com.professor.traficinspiration.ApplicationContext;
 import com.professor.traficinspiration.MyAlertDialogFragment;
 import com.professor.traficinspiration.model.Order;
@@ -16,6 +20,7 @@ import com.professor.traficinspiration.model.messages.EncryptionRequestMessage;
 import com.professor.traficinspiration.model.messages.EncryptionRequestMessage2;
 import com.professor.traficinspiration.model.messages.EncryptionResponseMessage;
 import com.professor.traficinspiration.model.messages.EncryptionResponseMessage2;
+import com.professor.traficinspiration.model.messages.ErrorResponse;
 import com.professor.traficinspiration.model.messages.OrderResponse;
 import com.professor.traficinspiration.model.messages.OrdersRequestMessage;
 import com.professor.traficinspiration.model.messages.OrdersResponseMessage;
@@ -37,6 +42,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.logging.ErrorManager;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -166,23 +172,26 @@ public class MessageService {
         Call<UserResponseMessage> call = userService.getOrCreateUser(userRequestMessage);
 
         Response<UserResponseMessage> response = sendResponse(call);
-        UserResponseMessage userResponseMessage = response.body();
+        if(isResponseSuccessful(response)) {
+            UserResponseMessage userResponseMessage = response.body();
 
-        User user = getUserForResponse(userResponseMessage);
+            User user = getUserForResponse(userResponseMessage);
+
 //        ApplicationContext.setUser(user);
 
-        if(chekcMAC_MAC(userResponseMessage.getKeyMACMAC(),userResponseMessage.getKeyMAC())){
+            if (chekcMAC_MAC(userResponseMessage.getKeyMACMAC(), userResponseMessage.getKeyMAC())) {
 
-            String KeyMAC_real = FirstStep2.decrypt(userResponseMessage.getKeyMAC(), ApplicationContext.getKeyAES());
-            ApplicationContext.setKeyMAC(KeyMAC_real);
+                String KeyMAC_real = FirstStep2.decrypt(userResponseMessage.getKeyMAC(), ApplicationContext.getKeyAES());
+                ApplicationContext.setKeyMAC(KeyMAC_real);
 
-            ApplicationContext.sequensePlus();
-           // Log.i("1","-----------------------------------user succses");
-            return user;
+                ApplicationContext.sequensePlus();
+                // Log.i("1","-----------------------------------user succses");
+                return user;
 
+            }
         }
+            return null;
 
-        return null;
     }
 
     private User getUserForResponse(UserResponseMessage userResponseMessage) {
@@ -332,19 +341,20 @@ public class MessageService {
             if (getContext() != null) {
                 Log.i("1","--------------------------------------------------------------------");
                 try {
-                    Log.i("1",response.errorBody().string().toString());
+                    Gson gson = new GsonBuilder().create();
+                    ErrorResponse mError=new ErrorResponse();
+                    try {
+                        mError= gson.fromJson(response.errorBody().string(),ErrorResponse .class);
+                        Toast.makeText(ApplicationContext.getContext(), mError.getKeysConfirm(), Toast.LENGTH_LONG).show();
+                    } catch (IOException e) {
+                        // handle failure to read error
+                    }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
 //            MyAlertDialogFragment.createAndShowErrorDialog("Сервер не отвечает. Проверьте соединение с интернетом");
-            return false;
-        }
 
-        if (response.body().getErrors() != null) {
-            if (getContext() != null) {
-                Toast.makeText(getContext(), Arrays.deepToString(response.body().getErrors().values().toArray()), Toast.LENGTH_LONG).show();
-            }
             return false;
         }
 
