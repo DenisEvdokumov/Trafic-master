@@ -19,6 +19,7 @@ import com.professor.traficinspiration.model.messages.EncryptionResponseMessage2
 import com.professor.traficinspiration.model.messages.OrderResponse;
 import com.professor.traficinspiration.model.messages.OrdersRequestMessage;
 import com.professor.traficinspiration.model.messages.OrdersResponseMessage;
+import com.professor.traficinspiration.model.messages.RequestMessage;
 import com.professor.traficinspiration.model.messages.ResponseMessage;
 import com.professor.traficinspiration.model.messages.SupportRequestMessage;
 import com.professor.traficinspiration.model.messages.SupportResponseMessage;
@@ -41,6 +42,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 import retrofit2.Retrofit;
+import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 import static com.professor.traficinspiration.ApplicationContext.getContext;
@@ -54,6 +56,7 @@ public class MessageService {
         Retrofit.Builder builder = new Retrofit
                 .Builder()
                 .baseUrl("http://tapmoney.testmy.tk/rest/")
+                .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
                 .addConverterFactory(GsonConverterFactory.create());
 
         retrofit = builder.build();
@@ -66,7 +69,7 @@ public class MessageService {
 
 
             if (UserHandler.handle(getOrCreateUser(email, password, action, idReferrer))) {
-                OrdersHandler.handle(getOrders(false));
+                OrdersHandler.handle(getOrders( false));
 
                 ApplicationContext.notificator.init();
             }
@@ -80,16 +83,13 @@ public class MessageService {
 
         EncryptionResponseMessage encryptionResponseMessage = SendFistEncryptKey();
 
-
         EncryptionResponseMessage2 encryptionResponseMessage2 = RequestEncryptKey(encryptionResponseMessage);
-
 
 
         if(chekcMAC_MAC(encryptionResponseMessage2.getKeyMAC_MAC(),encryptionResponseMessage2.getKeyMAC())){
 
             String KeyMAC_real = FirstStep2.decrypt(encryptionResponseMessage2.getKeyMAC(), ApplicationContext.getKeyAES());
             ApplicationContext.setKeyMAC(KeyMAC_real);
-            Log.i("1","-----------------------------------connect succses");
             return true;
         }
 
@@ -98,91 +98,47 @@ public class MessageService {
     }
 
     private EncryptionResponseMessage2 RequestEncryptKey(EncryptionResponseMessage encryptionResponseMessage) {
-        final EncryptionRequestMessage2 encryptionRequestMessage2 = FirstStep2.
+        EncryptionRequestMessage2 encryptionRequestMessage2 = FirstStep2.
                 genetateEncryptionRequestMessage(encryptionResponseMessage);
-        FistConnectToServerAPI fistConnectToServerAPI = retrofit.create(FistConnectToServerAPI.class);
-        final Call<EncryptionResponseMessage2> call2 = fistConnectToServerAPI.getFirstKey2(encryptionRequestMessage2);
 
-        Response<EncryptionResponseMessage2> response2 = null;
+        FistConnectToServerAPI fistConnectToServerAPI = retrofit
+                .create(FistConnectToServerAPI.class);
 
-        RequestExecutor requestExecutor2 = new RequestExecutor();
+        Call<EncryptionResponseMessage2> call2 = fistConnectToServerAPI
+                .getFirstKey2(encryptionRequestMessage2);
 
-        Log.i("1", encryptionRequestMessage2.getIdSessionMAC().toString());
-        try {
-            response2 = requestExecutor2.execute(call2).get();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-            Log.i("1", e.toString());
-            return null;
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-            Log.i("1", e.toString());
-            return null;
-        }
-
+        Response<EncryptionResponseMessage2> response2 = sendResponse(call2);
 
         if (!isResponseSuccessful(response2)) {
-            try {
-                Log.i("1", response2.errorBody().string().toString());
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-
-            return null;
+           return null;
         }
-        Log.i("1","-----------------------------------second succses");
+//        Log.i("1","-----------------------------------second succses");
         ApplicationContext.sequensePlus();
         return response2.body();
 
     }
 
     private EncryptionResponseMessage SendFistEncryptKey() {
+
         final EncryptionRequestMessage encryptionRequestMessage = FirstStep.genetateEncryptionRequestMessage();
         FistConnectToServerAPI fistConnectToServerAPI = retrofit.create(FistConnectToServerAPI.class);
         final Call<EncryptionResponseMessage> call = fistConnectToServerAPI.getFirstKey(encryptionRequestMessage);
 
-        Response<EncryptionResponseMessage> response = null;
-
-        RequestExecutor requestExecutor = new RequestExecutor();
-
-        try {
-            response = requestExecutor.execute(call).get();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-            Log.i("1", e.toString());
-            return null;
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-            Log.i("1", e.toString());
-            return null;
-        }
-
-
+        Response<EncryptionResponseMessage> response = sendResponse(call);
+       // Log.i("1","----------------------------------first succses");
         if (!isResponseSuccessful(response)) {
-            try {
-                Log.i("1",response.errorBody().string().toString());
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
             return null;
         }
-        Log.i("1","----------------------------------first succses");
         ApplicationContext.sequensePlus();
         return response.body();
     }
 
     private Boolean chekcMAC_MAC(String keyMAC_MAC,String keyMAC) {
-
-
-
         String keyMACold = ApplicationContext.getKeyMAC();
 
         String KeyMAC_from_MAC = FirstStep2.decrypt(keyMAC_MAC, keyMACold);
         //Проверка равен ли KeyMAC к KeyMAC_MACdecoded
-        if(keyMAC.equals(KeyMAC_from_MAC)) {
-
-        }else {
+        if(!keyMAC.equals(KeyMAC_from_MAC)) {
             return false;
         }
         return true;
@@ -192,8 +148,8 @@ public class MessageService {
 
         // !!! encrypt password...
 
-        final UserRequestMessage userRequestMessage = new UserRequestMessage();
-
+        UserRequestMessage userRequestMessage = new UserRequestMessage();
+        userRequestMessage = (UserRequestMessage) generateRequestMassage(userRequestMessage);
 
         String emailAES = encryptAES(email);
         userRequestMessage.setEmail(emailAES);
@@ -206,47 +162,14 @@ public class MessageService {
         userRequestMessage.setAction(action);
 
 
-        userRequestMessage.setIdSession(ApplicationContext.getIdSession());
-        userRequestMessage.setIdSessionMAC(encrypt(ApplicationContext.getIdSession()));
-
-        String sequenceAES = encryptAES(String.valueOf(Integer.parseInt(ApplicationContext.getSequence())));
-
-        userRequestMessage.setSequence(sequenceAES);
-        userRequestMessage.setSequenceMAC(encrypt(sequenceAES));
-
-
-
-
-
         UserService userService = retrofit.create(UserService.class);
-        final Call<UserResponseMessage> call = userService.getOrCreateUser(userRequestMessage);
+        Call<UserResponseMessage> call = userService.getOrCreateUser(userRequestMessage);
 
-        Response<UserResponseMessage> response = null;
-
-        RequestExecutor requestExecutor = new RequestExecutor();
-
-        try {
-            response = requestExecutor.execute(call).get();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-            return null;
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-            return null;
-        }
-
-
-        if (!isResponseSuccessful(response)) {
-            return null;
-        }
-
+        Response<UserResponseMessage> response = sendResponse(call);
         UserResponseMessage userResponseMessage = response.body();
 
         User user = getUserForResponse(userResponseMessage);
 //        ApplicationContext.setUser(user);
-
-
-
 
         if(chekcMAC_MAC(userResponseMessage.getKeyMACMAC(),userResponseMessage.getKeyMAC())){
 
@@ -254,13 +177,10 @@ public class MessageService {
             ApplicationContext.setKeyMAC(KeyMAC_real);
 
             ApplicationContext.sequensePlus();
-            Log.i("1","-----------------------------------user succses");
+           // Log.i("1","-----------------------------------user succses");
             return user;
 
         }
-
-
-
 
         return null;
     }
@@ -272,187 +192,24 @@ public class MessageService {
         user.setToken(decryptAES(userResponseMessage.getToken()));
         user.setOrdersCompleted(Long.parseLong(decryptAES(userResponseMessage.getOrdersCompleted())));
         user.setReferralsCount(Long.parseLong(decryptAES(userResponseMessage.getReferralsCount())));
-
-
         return user;
     }
 
-    private String decrypt(String string) {
-        String encryptString = FirstStep2.decrypt(string,ApplicationContext.getKeyMAC());
-        return encryptString;
-    }
 
-    private String decryptAES(String string) {
-        String encryptString = FirstStep2.decrypt(string,ApplicationContext.getKeyAES());
-        return encryptString;
-    }
-
-    private String encryptAES(String string) {
-        String encryptString = FirstStep2.encrypt(string,ApplicationContext.getKeyAES());
-        return encryptString;
-
-    }
-
-    private String encrypt(String string) {
-        String encryptString = FirstStep2.encrypt(string,ApplicationContext.getKeyMAC());
-        return encryptString;
-    }
-
-    public List<OrderResponse> getOrders(boolean history) {
-        return getOrders(ApplicationContext.getUser().getId(), ApplicationContext.getUser().getToken(), history);
-    }
-
-
-    public List<OrderResponse> getOrders(long userId, String sessionToken, boolean history) {
-        final OrdersRequestMessage ordersRequestMessage = new OrdersRequestMessage();
-        OrderService orderService = retrofit.create(OrderService.class);
-
-
-//        Log.i("1", "------------------------------------------------------------------");
-        String idSession = ApplicationContext.getIdSession();
-        Log.i("1", "idSession " + idSession);
-        Log.i("1","encrypt(idSession) " + encrypt(idSession));
-
-        String userIdAES = encryptAES(String.valueOf(userId));
-        Log.i("1","userIdAES " + userIdAES);
-        Log.i("1","encrypt(userIdAES) " + encrypt(userIdAES));
-
-        String tokenAES = encryptAES(String.valueOf(sessionToken));
-        Log.i("1", "tokenAES " + tokenAES);
-        Log.i("1", "encrypt(tokenAES) " +encrypt(tokenAES));
-
-        String sequenceAES = encryptAES(ApplicationContext.getSequence());
-        Log.i("1","sequenceAES " + sequenceAES);
-        Log.i("1", "encrypt(sequenceAES) " + encrypt(sequenceAES));
-
-
-
-        ordersRequestMessage.setIdSession(idSession);
-        ordersRequestMessage.setIdSessionMAC(encrypt(idSession));
-
-        ordersRequestMessage.setId(userIdAES);
-        ordersRequestMessage.setIdMAC(encrypt(userIdAES));
-
-        ordersRequestMessage.setToken(tokenAES);
-        ordersRequestMessage.setTokenMAC(encrypt(tokenAES));
-
-        ordersRequestMessage.setSequence(sequenceAES);
-        ordersRequestMessage.setSequenceMAC(encrypt(sequenceAES));
-
-
-
-        Call<OrdersResponseMessage> call;
-        String action;
-        if (history) {
-            action = "get-list";
-            ordersRequestMessage.setAction(action);
-            ordersRequestMessage.setAction_MAC(encrypt(action));
-            call = orderService.getOrdersHistory(ordersRequestMessage);
-        } else {
-            action = "list-orders";
-            ordersRequestMessage.setAction(action);
-            ordersRequestMessage.setAction_MAC(encrypt(action));
-            call = orderService.getOrders(ordersRequestMessage);
-        }
-        Log.i("1", "action " + action);
-        Log.i("1", "encrypt(action) " + encrypt(action));
-        Response<OrdersResponseMessage> response = null;
-
-        RequestExecutor requestExecutor = new RequestExecutor();
-
-        try {
-            response = requestExecutor.execute(call).get();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-            return null;
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-            return null;
-        }
-
-        if (!isResponseSuccessful(response)) {
-            try {
-                Log.i("1",response.errorBody().string().toString());
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            return null;
-        }
-
-        OrdersResponseMessage ordersResponseMessage = response.body();
-
-        if(chekcMAC_MAC(ordersResponseMessage.getKeyMACMAC(),ordersResponseMessage.getKeyMAC())){
-
-            String KeyMAC_real = FirstStep2.decrypt(ordersResponseMessage.getKeyMAC(), ApplicationContext.getKeyAES());
-            ApplicationContext.setKeyMAC(KeyMAC_real);
-
-            ApplicationContext.sequensePlus();
-            return ordersResponseMessage.getOrders();
-
-        }
-
-
-
-        return null;
-    }
 
     public void sendCompleteOrder(final Order order) {
 
         User user = ApplicationContext.getUser();
 
         CompleteOrderRequestMessage completeOrderRequestMessage = new CompleteOrderRequestMessage();
-        String idSession = ApplicationContext.getIdSession();
-//        Log.i("1", "idSession " + idSession);
-//        Log.i("1","encrypt(idSession) " + encrypt(idSession));
-//
-        String userIdAES = encryptAES(String.valueOf(user.getId()));
-//        Log.i("1","userIdAES " + userIdAES);
-//        Log.i("1","encrypt(userIdAES) " + encrypt(userIdAES));
-//
-        String tokenAES = encryptAES(String.valueOf(user.getToken()));
-//        Log.i("1", "tokenAES " + tokenAES);
-//        Log.i("1", "encrypt(tokenAES) " +encrypt(tokenAES));
-//
-        String sequenceAES = encryptAES(ApplicationContext.getSequence());
-//        Log.i("1","sequenceAES " + sequenceAES);
-//        Log.i("1", "encrypt(sequenceAES) " + encrypt(sequenceAES));
-//
-        String action = "set-completed-order";
-//        Log.i("1", "action " + action);
-//        Log.i("1", "encrypt(action) " + encrypt(action));
-//
-        String idOrderAES = encryptAES(String.valueOf(order.getId()));
-//        Log.i("1", "idOrderAES " + idOrderAES);
-//        Log.i("1", "encrypt(idOrderAES) " + encrypt(idOrderAES));
+        completeOrderRequestMessage = (CompleteOrderRequestMessage)
+                generateRequestMassage(completeOrderRequestMessage);
 
 
         int rev = order.getReview();
         if(rev>0) rev=1;
         order.setReview(rev);
         String review = String.valueOf(order.getReview());
-        Log.i("1", "review " + review);
-        Log.i("1", "encrypt(review) " + encrypt(review));
-
-
-        completeOrderRequestMessage.setIdSession(idSession);
-        completeOrderRequestMessage.setIdSessionMAC(encrypt(idSession));
-
-        completeOrderRequestMessage.setId(userIdAES);
-        completeOrderRequestMessage.setIdMAC(encrypt(userIdAES));
-
-        completeOrderRequestMessage.setToken(tokenAES);
-        completeOrderRequestMessage.setTokenMAC(encrypt(tokenAES));
-
-        completeOrderRequestMessage.setSequence(sequenceAES);
-        completeOrderRequestMessage.setSequenceMAC(encrypt(sequenceAES));
-
-
-        completeOrderRequestMessage.setAction(action);
-        completeOrderRequestMessage.setActionMAC(encrypt(action));
-
-        completeOrderRequestMessage.setIdOrder(idOrderAES);
-        completeOrderRequestMessage.setIdOrderMAC(encrypt(idOrderAES));
-
         completeOrderRequestMessage.setReview(review);
         completeOrderRequestMessage.setReviewMAC(encrypt(review));
 
@@ -461,48 +218,30 @@ public class MessageService {
         Call<CompleteOrderResponseMessage> call = orderService.completeOrder(completeOrderRequestMessage);
 
 
-        Response<OrdersResponseMessage> response = null;
-
-        RequestExecutor requestExecutor = new RequestExecutor();
-
-        try {
-            response = requestExecutor.execute(call).get();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-            return;
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-            return;
-        }
-
+        Response<OrdersResponseMessage> response = sendResponse(call);
         if (!isResponseSuccessful(response)) {
 
-            return;
-        }
+            if (order.isComment()) {
+                Toast.makeText(getContext(), "Оплата за выполнение будет перечислена после проверки модератором", Toast.LENGTH_LONG).show();
+            } else {
+                double payment = order.getPayment();
+                user.setBalance(user.getBalance() + payment);
+                order.setPayed(true);
+            }
 
-        if (order.isComment()) {
-            Toast.makeText(getContext(), "Оплата за выполнение будет перечислена после проверки модератором", Toast.LENGTH_LONG).show();
-        } else {
-            double payment = order.getPayment();
-            user.setBalance(user.getBalance() + payment);
+            // переместить выполненную задачу в архив
             order.setPayed(true);
-        }
-
-        // переместить выполненную задачу в архив
-        order.setPayed(true);
-        ApplicationContext.getIdToActiveOrderMap().remove(order.getId());
-        ApplicationContext.getIdToHistoryOrderMap().put(order.getId(), order);
+            ApplicationContext.getIdToActiveOrderMap().remove(order.getId());
+            ApplicationContext.getIdToHistoryOrderMap().put(order.getId(), order);
 
 
-
-        ApplicationContext.getDatabaseManager().writeOrderToDB(order);
+            ApplicationContext.getDatabaseManager().writeOrderToDB(order);
 //        ApplicationContext.sequensePlus();
-
+        }
     }
 
     public void withdraw(int amount, String withdrawType, String accountNumber, String notice) {
-        WithdrawRequestMessage withdrawRequestMessage = new WithdrawRequestMessage(ApplicationContext.getUser().getId(), ApplicationContext.getIdSession(), amount, withdrawType, accountNumber, notice);
-
+        WithdrawRequestMessage withdrawRequestMessage = new WithdrawRequestMessage();
         MoneyService moneyService = retrofit.create(MoneyService.class);
         Call<WithdrawResponseMessage> call = moneyService.withdraw(withdrawRequestMessage);
 
@@ -561,7 +300,7 @@ public class MessageService {
     }
 
     public void sendSupportRequest(String message) {
-        SupportRequestMessage supportRequestMessage = new SupportRequestMessage(ApplicationContext.getUser().getId(), ApplicationContext.getIdSession(), message);
+        SupportRequestMessage supportRequestMessage = new SupportRequestMessage();
 
         SupportService supportService = retrofit.create(SupportService.class);
         Call<SupportResponseMessage> call = supportService.sendSupportRequest(supportRequestMessage);
@@ -586,36 +325,6 @@ public class MessageService {
         });
 
     }
-
-//    public int getServerKey(int clientKey) {
-//        EncryptingService encryptingService = retrofit.create(EncryptingService.class);
-//
-//        Call<EncryptionResponseMessage> call = encryptingService.getServerKey(clientKey);
-//
-//        Response<EncryptionResponseMessage> response = null;
-//
-//        RequestExecutor requestExecutor = new RequestExecutor();
-//
-//        try {
-//            response = requestExecutor.execute(call).get();
-//        } catch (InterruptedException e) {
-//            e.printStackTrace();
-//            return -1;
-//        } catch (ExecutionException e) {
-//            e.printStackTrace();
-//            return -1;
-//        }
-//
-//        if (!isResponseSuccessful(response)) {
-//            return -1;
-//        }
-//
-//        EncryptionResponseMessage encryptionResponseMessage = response.body();
-//
-////        ApplicationContext.setIdSession(encryptionResponseMessage.getToken());
-//
-//        return encryptionResponseMessage.getServerKey();
-//    }
 
     private boolean isResponseSuccessful(Response<? extends ResponseMessage> response) {
 
@@ -642,6 +351,107 @@ public class MessageService {
         return true;
     }
 
+
+    private RequestMessage generateRequestMassage(RequestMessage requestMessage) {
+        User user = ApplicationContext.getUser();
+
+//        Log.i("1", "------------------------------------------------------------------");
+        String idSession = ApplicationContext.getIdSession();
+//        Log.i("1", "idSession " + idSession);
+//        Log.i("1","encrypt(idSession) " + encrypt(idSession));
+
+        String userIdAES = encryptAES(String.valueOf(user.getId()));
+//        Log.i("1","userIdAES " + userIdAES);
+//        Log.i("1","encrypt(userIdAES) " + encrypt(userIdAES));
+
+        String tokenAES = encryptAES(String.valueOf(user.getToken()));
+//        Log.i("1", "tokenAES " + tokenAES);
+//        Log.i("1", "encrypt(tokenAES) " +encrypt(tokenAES));
+
+        String sequenceAES = encryptAES(ApplicationContext.getSequence());
+//        Log.i("1","sequenceAES " + sequenceAES);
+//        Log.i("1", "encrypt(sequenceAES) " + encrypt(sequenceAES));
+
+
+
+        requestMessage.setIdSession(idSession);
+        requestMessage.setIdSessionMAC(encrypt(idSession));
+
+        requestMessage.setId(userIdAES);
+        requestMessage.setIdMAC(encrypt(userIdAES));
+
+        requestMessage.setToken(tokenAES);
+        requestMessage.setTokenMAC(encrypt(tokenAES));
+
+        requestMessage.setSequence(sequenceAES);
+        requestMessage.setSequenceMAC(encrypt(sequenceAES));
+
+
+        return requestMessage;
+    }
+
+
+    private String decryptAES(String string) {
+        String encryptString = FirstStep2.decrypt(string,ApplicationContext.getKeyAES());
+        return encryptString;
+    }
+
+    private String encryptAES(String string) {
+        String encryptString = FirstStep2.encrypt(string,ApplicationContext.getKeyAES());
+        return encryptString;
+
+    }
+
+    private String encrypt(String string) {
+        String encryptString = FirstStep2.encrypt(string,ApplicationContext.getKeyMAC());
+        return encryptString;
+    }
+
+    public List<OrderResponse> getOrders(boolean history) {
+        return getOrders(ApplicationContext.getUser().getId(), ApplicationContext.getUser().getToken(), history);
+    }
+    public List<OrderResponse> getOrders(long userId, String sessionToken, boolean history) {
+        OrdersRequestMessage ordersRequestMessage = new OrdersRequestMessage();
+        ordersRequestMessage = (OrdersRequestMessage) generateRequestMassage(ordersRequestMessage);
+        OrderService orderService = retrofit.create(OrderService.class);
+
+
+
+        Call<OrdersResponseMessage> call;
+        String action;
+        if (history) {
+            action = "get-list";
+            ordersRequestMessage.setAction(action);
+            ordersRequestMessage.setActionMAC(encrypt(action));
+            call = orderService.getOrdersHistory(ordersRequestMessage);
+        } else {
+            action = "list-orders";
+            ordersRequestMessage.setAction(action);
+            ordersRequestMessage.setActionMAC(encrypt(action));
+            call = orderService.getOrders(ordersRequestMessage);
+        }
+//        Log.i("1", "action " + action);
+//        Log.i("1", "encrypt(action) " + encrypt(action));
+        Response<OrdersResponseMessage> response = sendResponse(call);
+
+        OrdersResponseMessage ordersResponseMessage = response.body();
+
+        if(chekcMAC_MAC(ordersResponseMessage.getKeyMACMAC(),ordersResponseMessage.getKeyMAC())){
+
+            String KeyMAC_real = FirstStep2.decrypt(ordersResponseMessage.getKeyMAC(), ApplicationContext.getKeyAES());
+            ApplicationContext.setKeyMAC(KeyMAC_real);
+
+            ApplicationContext.sequensePlus();
+            return ordersResponseMessage.getOrders();
+
+        }
+
+
+
+        return null;
+    }
+
+
     static class RequestExecutor extends AsyncTask<Call, Void, Response> {
 
         @Override
@@ -654,6 +464,35 @@ public class MessageService {
             }
             return null;
         }
+    }
+
+    private Response sendResponse(Call call) {
+        Response<EncryptionResponseMessage> response = null;
+
+        RequestExecutor requestExecutor = new RequestExecutor();
+
+        try {
+            response = requestExecutor.execute(call).get();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            Log.i("1", e.toString());
+            return null;
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+            Log.i("1", e.toString());
+            return null;
+        }
+
+
+        if (!isResponseSuccessful(response)) {
+            try {
+                Log.i("1",response.errorBody().string().toString());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+        return response;
     }
 
 }

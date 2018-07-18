@@ -67,7 +67,7 @@ public class FirstStep2 {
 		//Проверка равен ли string к stringMACdecoded
 
 		if(string.equals(string_form_MAC)) {
-			Log.i("1","string == stringMACdecoded");
+			//Log.i("1","string == stringMACdecoded");
 		}else {
 			return null;
 		}
@@ -75,7 +75,7 @@ public class FirstStep2 {
 		String idSession_from_MAC = FirstStep2.decrypt(idSessionMAC, keyMACold);
 		//Проверка равен ли string к idSessionDecoded
 		if(idSession.equals(idSession_from_MAC )) {
-			Log.i("1","idSession == idSessionDecoded");
+//			Log.i("1","idSession == idSessionDecoded");
 		}else {
 			return null;
 		}
@@ -83,7 +83,7 @@ public class FirstStep2 {
 		String KeyMAC_from_MAC = FirstStep2.decrypt(keyMAC_MAC, keyMACold);
 		//Проверка равен ли KeyMAC к KeyMAC_MACdecoded
 		if(keyMAC.equals(KeyMAC_from_MAC)) {
-			Log.i("1","KeyMAC == KeyMAC_MACdecoded");
+//			Log.i("1","KeyMAC == KeyMAC_MACdecoded");
 		}else {
 			return null;
 		}
@@ -91,7 +91,7 @@ public class FirstStep2 {
 		
 		//String keyAES = FirstStep2.getKey();
 		String keyMAC_real = FirstStep2.decrypt(keyMAC, keyAESold);
-		Log.i("1","keyMAC_real " + keyMAC_real);
+//		Log.i("1","keyMAC_real " + keyMAC_real);
 		
 
 		String newString = FirstStep2.getString();

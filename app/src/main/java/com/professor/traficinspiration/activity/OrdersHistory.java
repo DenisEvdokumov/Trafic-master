@@ -13,9 +13,7 @@ import com.professor.traficinspiration.R;
 import com.professor.traficinspiration.model.Order;
 import com.professor.traficinspiration.service.adapter.OrderAdapter;
 import com.professor.traficinspiration.service.handler.OrderHistoryHandler;
-import com.squareup.picasso.Picasso;
 
-import java.io.IOException;
 import java.util.List;
 
 public class OrdersHistory extends AppCompatActivity implements AdapterView.OnItemClickListener, View.OnClickListener {

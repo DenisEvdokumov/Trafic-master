@@ -241,7 +241,7 @@ public class ApplicationContext {
 
     public static void sequensePlus() {
         int oldSequense = Integer.parseInt(sequence) + 1;
-        Log.i("1","----------------------------------------"+sequence);
+//        Log.i("1","----------------------------------------"+sequence);
         sequence = String.valueOf(oldSequense);
 
     }

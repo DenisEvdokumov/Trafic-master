@@ -20,14 +20,7 @@ public class WithdrawRequestMessage extends RequestMessage{
     public WithdrawRequestMessage() {
     }
 
-    public WithdrawRequestMessage(long userId, String token, long amount, String withdrawType, String accountNumber, String notice) {
-        setUserId(userId);
-        setToken(token);
-        this.amount = amount;
-        this.withdrawType = withdrawType;
-        this.accountNumber = accountNumber;
-        this.notice = notice;
-    }
+
 
 
     public long getAmount() {

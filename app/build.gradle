@@ -36,6 +36,7 @@ dependencies {
     compile 'de.hdodenhof:circleimageview:2.2.0'
     compile 'org.jsoup:jsoup:1.9.1'
     testCompile 'junit:junit:4.12'
+    compile 'com.squareup.retrofit2:adapter-rxjava:2.3.0'
 
     compile 'com.loopj.android:android-async-http:1.4.9'
 

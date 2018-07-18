@@ -56,16 +56,16 @@ public class FirstStep {
 		String encryptedKeyAES = FirstStep.encryptRSA(keyAES, keyExp, keyMod);
 		String encryptedKeyMAC = FirstStep.encryptRSA(keyMAC, keyExp, keyMod); 
 		
-		Log.i("1","sequence - "+sequence);
-		Log.i("1","keyAES - "+keyAES);
-		Log.i("1","keyMAC - "+keyMAC);
-
-		Log.i("1","\n----------- Параметры запроса ----------\n");
-
-		Log.i("1","sequence - "+sequenceAES);
-		Log.i("1","sequenceMAC - "+sequenceMAC);
-		Log.i("1","encryptedKeyAES - "+encryptedKeyAES);
-		Log.i("1","encryptedKeyMAC - "+encryptedKeyMAC);
+//		Log.i("1","sequence - "+sequence);
+//		Log.i("1","keyAES - "+keyAES);
+//		Log.i("1","keyMAC - "+keyMAC);
+//
+//		Log.i("1","\n----------- Параметры запроса ----------\n");
+//
+//		Log.i("1","sequence - "+sequenceAES);
+//		Log.i("1","sequenceMAC - "+sequenceMAC);
+//		Log.i("1","encryptedKeyAES - "+encryptedKeyAES);
+//		Log.i("1","encryptedKeyMAC - "+encryptedKeyMAC);
 
 		EncryptionRequestMessage encryptionRequestMessage =
 				new EncryptionRequestMessage(ACTION_SET_KEY,sequenceAES,sequenceMAC,encryptedKeyAES,encryptedKeyMAC);
