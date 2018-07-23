@@ -10,7 +10,7 @@
     <string name="text_networks">СОЦ.СЕТИ</string>
     <string name="text_support">ПОДДЕРЖКА</string>
     <string name="text_help">СПРАВКА</string>
-    <string name="text_mobile_description">Мгновенное пополнение мобильного счета</string>
+    <string name="text_mobile_description">Мгновенное пополнение любого WMR кошелька!</string>
     <string name="text_mobile">МОБИЛЬНЫЙ СЧЕТ</string>
     <string name="money_history">ИСТОРИЯ ВЫПЛАТ</string>
     <string name="money_history_description">Вся история вывода денег</string>

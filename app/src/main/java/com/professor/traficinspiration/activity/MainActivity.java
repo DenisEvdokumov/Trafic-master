@@ -207,8 +207,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         // попытка отправить сообщение о завершении задач которые сервер не принял до этого или выполнение требует проверки
         // по идее, это будет происходить очень редко
         for (Order order : ApplicationContext.getActiveOrderList()) {
-            if (order.isFinished() && !order.isPayed()) {
+            if (order.isFinished() & !order.isPayed()) {
                ApplicationContext.getMessageService().sendCompleteOrder(order);
+               Toast.makeText(getApplicationContext(),"SEND",Toast.LENGTH_LONG).show();
             }
         }
 

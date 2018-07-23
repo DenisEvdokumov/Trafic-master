@@ -42,7 +42,7 @@ public class NotificationReceiver extends BroadcastReceiver {
         pIntent2 = PendingIntent.getBroadcast(context, 0, intent2, 0);
 
         AlarmManager am = (AlarmManager) ctx.getSystemService(ALARM_SERVICE);
-        am.set(AlarmManager.RTC, System.currentTimeMillis() + 6 * 60 * 60 * 1000, pIntent2);
+        am.set(AlarmManager.RTC, System.currentTimeMillis() +  1000, pIntent2);
 
 
         // проверить наличие незавершенных задач

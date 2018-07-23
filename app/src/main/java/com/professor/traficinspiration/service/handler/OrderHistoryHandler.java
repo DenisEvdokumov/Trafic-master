@@ -31,6 +31,7 @@ public class OrderHistoryHandler {
         List<Order> orderList = new ArrayList<>();
         for (OrderResponse orderResponse: orderResponseList){
             Order order = new Order();
+
             if (orderResponse.getId()==null) continue;
             order.setId(Long.parseLong(decryptAES(orderResponse.getId())));
             order.setName(decryptAES(orderResponse.getName()));
@@ -45,6 +46,7 @@ public class OrderHistoryHandler {
             order.setReview(Integer.parseInt(decryptAES(orderResponse.getNeededReviews())));
             orderList.add(order);
         }
+        //Toast.makeText(ApplicationContext.getContext(),orderResponseList.size() + " ",Toast.LENGTH_LONG).show();
         for (Order order : orderList) {
             if (currentHistoryOrderList.contains(order)) {
                 continue;

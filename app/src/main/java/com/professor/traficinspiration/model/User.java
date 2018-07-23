@@ -21,21 +21,7 @@ public class User {
 
     private Drawable photo;
 
-    public User() {
-    }
 
-//    public User(long id, long idReferrer, String name, String password, double balance, String email, long createdAt, long ordersCompleted, long referralsCount) {
-//        super();
-//        this.id = id;
-//        this.idReferrer = idReferrer;
-//        this.name = name;
-//        this.password = password;
-//        this.balance = balance;
-//        this.email = email;
-//        this.createdAt = createdAt;
-//        this.ordersCompleted = ordersCompleted;
-//        this.referralsCount = referralsCount;
-//    }
 
     public long getId() {
         return id;
@@ -84,14 +70,6 @@ public class User {
     public void setEmail(String email) {
         this.email = email;
     }
-
-//    public long getCreatedAt() {
-//        return createdAt;
-//    }
-//
-//    public void setCreatedAt(long createdAt) {
-//        this.createdAt = createdAt;
-//    }
 
     public long getOrdersCompleted() {
         return ordersCompleted;

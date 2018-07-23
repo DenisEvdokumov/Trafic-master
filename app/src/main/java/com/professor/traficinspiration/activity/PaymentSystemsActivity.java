@@ -21,7 +21,10 @@ public class PaymentSystemsActivity extends AppCompatActivity implements View.On
 
 
         findViewById(R.id.btn_mobile).setOnClickListener(this);
-        findViewById(R.id.btn_history).setOnClickListener(this);
+        findViewById(R.id.btn_mobile).setOnClickListener(this);
+        findViewById(R.id.btnQiwi).setOnClickListener(this);
+        findViewById(R.id.btnWm).setOnClickListener(this);
+        findViewById(R.id.btnYandex).setOnClickListener(this);
 
     }
 
@@ -38,9 +41,13 @@ public class PaymentSystemsActivity extends AppCompatActivity implements View.On
                 Intent toWithdrawHistoryActivity = new Intent(this, WithdrawHistoryActivity.class);
                 startActivity(toWithdrawHistoryActivity);
                 break;
+
             case R.id.btn_mobile:
-                Intent toMoneyActivity = new Intent(this, MoneyActivity.class).putExtra("withdrawType", (String) v.getTag());
-                startActivity(toMoneyActivity);
+            case R.id.btnQiwi:
+            case R.id.btnWm:
+            case R.id.btnYandex:
+                Intent toMoneyActivit = new Intent(this, MoneyActivity.class).putExtra("withdrawType", (String) v.getTag());
+                startActivity(toMoneyActivit);
                 break;
 
         }

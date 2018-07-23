@@ -13,12 +13,16 @@ import com.professor.traficinspiration.ApplicationContext;
 import com.professor.traficinspiration.R;
 import com.professor.traficinspiration.activity.SignInActivity;
 import com.professor.traficinspiration.model.User;
+import com.professor.traficinspiration.model.messages.UserResponseMessage;
+import com.professor.traficinspiration.service.MessageService;
+import com.professor.traficinspiration.utils.FirstStep;
+import com.professor.traficinspiration.utils.FirstStep2;
 import com.squareup.picasso.Picasso;
 
 public class UserHandler {
 
-    public static boolean handle(User userServer) {
-        if (userServer == null) {
+    public static boolean handle(UserResponseMessage userResponseMessage) {
+        if (userResponseMessage == null) {
             Intent toSignInActivity = new Intent(ApplicationContext.getContext(), SignInActivity.class);
             ApplicationContext.getContext().startActivity(toSignInActivity);
 //            MyAlertDialogFragment.createAndShowErrorDialog("Сервер не отвечает. Проверьте соединение с интернетом");
@@ -31,12 +35,12 @@ public class UserHandler {
             return false;
         }
         User user = ApplicationContext.getUser();
+        user.setId(Long.parseLong(decryptAES(userResponseMessage.getId())));
+        user.setBalance(Long.parseLong(decryptAES(userResponseMessage.getBalance())));
+        user.setToken(decryptAES(userResponseMessage.getToken()));
+        user.setOrdersCompleted(Long.parseLong(decryptAES(userResponseMessage.getOrdersCompleted())));
+        user.setReferralsCount(Long.parseLong(decryptAES(userResponseMessage.getReferralsCount())));
 
-        user.setId(userServer.getId());
-        user.setBalance(userServer.getBalance());
-        user.setToken(userServer.getToken());
-        user.setOrdersCompleted(userServer.getOrdersCompleted());
-        user.setReferralsCount(userServer.getReferralsCount());
 
         // отобразить информацию о пользователе
         ImageView userPhotoView = (ImageView) ApplicationContext.getContext().findViewById(R.id.avatar);
@@ -61,4 +65,9 @@ public class UserHandler {
 
         return true;
     }
+    private static String decryptAES(String string) {
+        String encryptString = FirstStep2.decrypt(string,ApplicationContext.getKeyAES());
+        return encryptString;
+    }
+
 }

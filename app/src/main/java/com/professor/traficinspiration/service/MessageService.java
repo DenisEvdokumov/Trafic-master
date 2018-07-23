@@ -2,6 +2,7 @@ package com.professor.traficinspiration.service;
 
 
 import android.os.AsyncTask;
+import android.support.annotation.NonNull;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -57,6 +58,8 @@ public class MessageService {
 
 
     static Retrofit retrofit;
+
+
 
     public MessageService() {
         Retrofit.Builder builder = new Retrofit
@@ -150,7 +153,7 @@ public class MessageService {
         return true;
     }
 
-    public User getOrCreateUser(final String email, final String password, final String action, final Long idReferrer) {
+    public UserResponseMessage getOrCreateUser(final String email, final String password, final String action, final Long idReferrer) {
 
         // !!! encrypt password...
 
@@ -172,10 +175,10 @@ public class MessageService {
         Call<UserResponseMessage> call = userService.getOrCreateUser(userRequestMessage);
 
         Response<UserResponseMessage> response = sendResponse(call);
+
         if(isResponseSuccessful(response)) {
             UserResponseMessage userResponseMessage = response.body();
 
-            User user = getUserForResponse(userResponseMessage);
 
 //        ApplicationContext.setUser(user);
 
@@ -186,7 +189,7 @@ public class MessageService {
 
                 ApplicationContext.sequensePlus();
                 // Log.i("1","-----------------------------------user succses");
-                return user;
+                return userResponseMessage;
 
             }
         }
@@ -194,15 +197,7 @@ public class MessageService {
 
     }
 
-    private User getUserForResponse(UserResponseMessage userResponseMessage) {
-        User user = new User();
-        user.setId(Long.parseLong(decryptAES(userResponseMessage.getId())));
-        user.setBalance(Long.parseLong(decryptAES(userResponseMessage.getBalance())));
-        user.setToken(decryptAES(userResponseMessage.getToken()));
-        user.setOrdersCompleted(Long.parseLong(decryptAES(userResponseMessage.getOrdersCompleted())));
-        user.setReferralsCount(Long.parseLong(decryptAES(userResponseMessage.getReferralsCount())));
-        return user;
-    }
+
 
 
 
@@ -213,6 +208,15 @@ public class MessageService {
         CompleteOrderRequestMessage completeOrderRequestMessage = new CompleteOrderRequestMessage();
         completeOrderRequestMessage = (CompleteOrderRequestMessage)
                 generateRequestMassage(completeOrderRequestMessage);
+
+        String action = "set-completed-order";
+        String idOrderAES = encryptAES(String.valueOf(order.getId()));
+
+        completeOrderRequestMessage.setIdOrder(idOrderAES);
+        completeOrderRequestMessage.setIdOrderMAC(encrypt(idOrderAES));
+
+        completeOrderRequestMessage.setAction(action);
+        completeOrderRequestMessage.setActionMAC(encrypt(action));
 
 
         int rev = order.getReview();
@@ -228,7 +232,7 @@ public class MessageService {
 
 
         Response<OrdersResponseMessage> response = sendResponse(call);
-        if (!isResponseSuccessful(response)) {
+        if (isResponseSuccessful(response)) {
 
             if (order.isComment()) {
                 Toast.makeText(getContext(), "Оплата за выполнение будет перечислена после проверки модератором", Toast.LENGTH_LONG).show();
@@ -246,6 +250,9 @@ public class MessageService {
 
             ApplicationContext.getDatabaseManager().writeOrderToDB(order);
 //        ApplicationContext.sequensePlus();
+        }else{
+//            ApplicationContext.getIdToActiveOrderMap().remove(order.getId());
+//            ApplicationContext.getIdToHistoryOrderMap().put(order.getId(), order);
         }
     }
 
@@ -310,28 +317,21 @@ public class MessageService {
 
     public void sendSupportRequest(String message) {
         SupportRequestMessage supportRequestMessage = new SupportRequestMessage();
+        supportRequestMessage = (SupportRequestMessage) generateRequestMassage(supportRequestMessage);
+
+        String messageAES = encryptAES(message);
+        supportRequestMessage.setMsg(messageAES);
+        supportRequestMessage.setMsgMAC(encrypt(messageAES));
+
+        String action = "send-message";
+        supportRequestMessage.setAction(action);
+        supportRequestMessage.setActionMAC(encrypt(action));
 
         SupportService supportService = retrofit.create(SupportService.class);
         Call<SupportResponseMessage> call = supportService.sendSupportRequest(supportRequestMessage);
+        Response response = sendResponse(call);
 
-        call.enqueue(new Callback<SupportResponseMessage>() {
-            @Override
-            public void onResponse(Call<SupportResponseMessage> call, Response<SupportResponseMessage> response) {
-
-                if (!isResponseSuccessful(response)) {
-                    return;
-                }
-
-                Toast.makeText(getContext(), response.body().getMessage(), Toast.LENGTH_LONG).show();
-
-
-            }
-
-            @Override
-            public void onFailure(Call<SupportResponseMessage> call, Throwable t) {
-
-            }
-        });
+        isResponseSuccessful(response);
 
     }
 
@@ -339,7 +339,7 @@ public class MessageService {
 
         if (response == null || !response.isSuccessful()) {
             if (getContext() != null) {
-                Log.i("1","--------------------------------------------------------------------");
+              //  Log.i("1","--------------------------------------------------------------------");
                 try {
                     Gson gson = new GsonBuilder().create();
                     ErrorResponse mError=new ErrorResponse();
@@ -401,11 +401,6 @@ public class MessageService {
     }
 
 
-    private String decryptAES(String string) {
-        String encryptString = FirstStep2.decrypt(string,ApplicationContext.getKeyAES());
-        return encryptString;
-    }
-
     private String encryptAES(String string) {
         String encryptString = FirstStep2.encrypt(string,ApplicationContext.getKeyAES());
         return encryptString;
@@ -442,7 +437,32 @@ public class MessageService {
         }
 //        Log.i("1", "action " + action);
 //        Log.i("1", "encrypt(action) " + encrypt(action));
-        Response<OrdersResponseMessage> response = sendResponse(call);
+        Response<OrdersResponseMessage> response = null;
+
+
+        RequestExecutor requestExecutor = new RequestExecutor();
+
+        try {
+            response = requestExecutor.execute(call).get();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            Log.i("1", e.toString());
+            return null;
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+            Log.i("1", e.toString());
+            return null;
+        }
+
+
+        if (!isResponseSuccessful(response)) {
+            try {
+                Log.i("1",response.errorBody().string().toString());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
 
         OrdersResponseMessage ordersResponseMessage = response.body();
 
@@ -477,7 +497,7 @@ public class MessageService {
     }
 
     private Response sendResponse(Call call) {
-        Response<EncryptionResponseMessage> response = null;
+        Response response = null;
 
         RequestExecutor requestExecutor = new RequestExecutor();
 
