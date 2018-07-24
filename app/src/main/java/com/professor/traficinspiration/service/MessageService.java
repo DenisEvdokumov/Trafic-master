@@ -258,26 +258,55 @@ public class MessageService {
 
     public void withdraw(int amount, String withdrawType, String accountNumber, String notice) {
         WithdrawRequestMessage withdrawRequestMessage = new WithdrawRequestMessage();
+        withdrawRequestMessage = (WithdrawRequestMessage) generateRequestMassage(withdrawRequestMessage);
         MoneyService moneyService = retrofit.create(MoneyService.class);
         Call<WithdrawResponseMessage> call = moneyService.withdraw(withdrawRequestMessage);
 
-        call.enqueue(new Callback<WithdrawResponseMessage>() {
-            @Override
-            public void onResponse(Call<WithdrawResponseMessage> call, Response<WithdrawResponseMessage> response) {
+        String action = "order";
+        String action_MAC = encrypt(action);
+        Log.i("1",action);
 
-                if (!isResponseSuccessful(response)) {
-                    return;
-                }
+        String sum = String.valueOf(amount);
+        String sum_AES = encrypt(sum);
+        String sum_MAC = encryptAES(sum_AES);
 
-                Toast.makeText(getContext(), response.body().getMessage(), Toast.LENGTH_LONG).show();
+        String type = withdrawType;
+        String type_AES = encrypt(type);
+        String type_MAC = encryptAES(type_AES);
 
-            }
+        String phone = accountNumber;
+        String phone_AES = encrypt(phone);
+        String phone_MAC = encryptAES(phone_AES);
 
-            @Override
-            public void onFailure(Call<WithdrawResponseMessage> call, Throwable t) {
-                MyAlertDialogFragment.createAndShowErrorDialog("Возникла ошибка в процессе попытки вывода средств");
-            }
-        });
+
+
+
+        Response<WithdrawResponseMessage> response = sendResponse(call);
+        if (isResponseSuccessful(response)) {
+
+
+
+
+        }else{
+            MyAlertDialogFragment.createAndShowErrorDialog("Возникла ошибка в процессе попытки вывода средств");
+        }
+//        call.enqueue(new Callback<WithdrawResponseMessage>() {
+//            @Override
+//            public void onResponse(Call<WithdrawResponseMessage> call, Response<WithdrawResponseMessage> response) {
+//
+//                if (!isResponseSuccessful(response)) {
+//                    return;
+//                }
+//
+//                Toast.makeText(getContext(), response.body().getMessage(), Toast.LENGTH_LONG).show();
+//
+//            }
+//
+//            @Override
+//            public void onFailure(Call<WithdrawResponseMessage> call, Throwable t) {
+//                MyAlertDialogFragment.createAndShowErrorDialog("Возникла ошибка в процессе попытки вывода средств");
+//            }
+//        });
     }
 
     public List<WithdrawHistoryEntry> getWithdrawHistory() {
