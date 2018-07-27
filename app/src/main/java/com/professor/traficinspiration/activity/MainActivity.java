@@ -36,7 +36,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         ApplicationContext.setContext(this);
 //        ApplicationContext.notificator.init();
-
+        //startService(new Intent(MainActivity.this, NotificationService.class));
         // проверить не залогинен ли уже пользователь
         User user = ApplicationContext.getUser();
         if (user == null || user.getId() == 0) {

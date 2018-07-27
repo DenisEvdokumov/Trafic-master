@@ -70,8 +70,9 @@ public class DatabaseManager {
     }
 
 
-    public void readOrdersFromDB() {
-
+    public List<Order> readOrdersFromDB() {
+        List<Order> activeOrderList = new ArrayList<>();
+        List<Order> historyOrderList = new ArrayList<>();
         // делаем запрос всех данных из таблицы mytable, получаем Cursor
         Cursor resultCursor = db.query("orders", null, null, null, null, null, null);
 
@@ -80,7 +81,7 @@ public class DatabaseManager {
         if (!resultCursor.moveToFirst()) {
 //            Toast.makeText(ApplicationContext.getContext(), "no rows", Toast.LENGTH_LONG).show();
             resultCursor.close();
-            return;
+            return activeOrderList;
         }
 
         // определяем номера столбцов по имени в выборке
@@ -99,8 +100,7 @@ public class DatabaseManager {
         int keywordsColIndex = resultCursor.getColumnIndex("key_words");
 
 
-        List<Order> activeOrderList = new ArrayList<>();
-        List<Order> historyOrderList = new ArrayList<>();
+
 
         do {
             Order order = new Order(
@@ -136,6 +136,8 @@ public class DatabaseManager {
         ApplicationContext.setHistoryOrderList(historyOrderList);
 
         resultCursor.close();
+
+        return activeOrderList;
     }
 
     public void closeDB() {
