@@ -9,6 +9,7 @@ public class EncryptionRequestMessage  {
     @SerializedName("sequence")
     private String sequence;
 
+
     @SerializedName("sequence_MAC")
     private String sequenceMAC;
 

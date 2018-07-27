@@ -1,11 +1,13 @@
 package com.professor.traficinspiration.model.messages;
 
 
+import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
 import java.util.Map;
 
 public abstract class ResponseMessage {
+
     @SerializedName("errors")
     private Map<String, String[]> errors;
 

@@ -14,7 +14,7 @@ import retrofit2.http.Query;
 
 public interface MoneyService {
 
-    @POST("withdraw")
+    @POST("withdraw1")
     Call<WithdrawResponseMessage> withdraw(@Body WithdrawRequestMessage withdrawRequestMessage);
 
     @GET("withdraw")

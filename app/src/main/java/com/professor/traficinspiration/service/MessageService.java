@@ -258,55 +258,79 @@ public class MessageService {
 
     public void withdraw(int amount, String withdrawType, String accountNumber, String notice) {
         WithdrawRequestMessage withdrawRequestMessage = new WithdrawRequestMessage();
+
         withdrawRequestMessage = (WithdrawRequestMessage) generateRequestMassage(withdrawRequestMessage);
-        MoneyService moneyService = retrofit.create(MoneyService.class);
-        Call<WithdrawResponseMessage> call = moneyService.withdraw(withdrawRequestMessage);
+
 
         String action = "order";
         String action_MAC = encrypt(action);
-        Log.i("1",action);
+
 
         String sum = String.valueOf(amount);
-        String sum_AES = encrypt(sum);
-        String sum_MAC = encryptAES(sum_AES);
+        String sum_AES = encryptAES(sum);
+        String sum_MAC = encrypt(sum_AES);
 
         String type = withdrawType;
-        String type_AES = encrypt(type);
-        String type_MAC = encryptAES(type_AES);
+        String type_AES = encryptAES(type);
+        String type_MAC = encrypt(type_AES);
 
         String phone = accountNumber;
-        String phone_AES = encrypt(phone);
-        String phone_MAC = encryptAES(phone_AES);
+        String phone_AES = encryptAES(phone);
+        String phone_MAC = encrypt(phone_AES);
+
+        Log.i("1", "action   " + action);
+        Log.i("1", "1   " + action_MAC);
+        Log.i("1", "idSession   " + withdrawRequestMessage.getIdSession());
+        Log.i("1", "1   " + withdrawRequestMessage.getIdSessionMAC());
+        Log.i("1", "id   " + withdrawRequestMessage.getId());
+        Log.i("1", "1   " + withdrawRequestMessage.getIdMAC());
+        Log.i("1", "token   " + withdrawRequestMessage.getToken());
+        Log.i("1", "1   " + withdrawRequestMessage.getTokenMAC());
+        Log.i("1", "sequence  " + withdrawRequestMessage.getSequence());
+        Log.i("1", "1   " + withdrawRequestMessage.getSequenceMAC());
+        Log.i("1", "sum   " + sum_AES);
+        Log.i("1", "1   " + sum_MAC);
+        Log.i("1", "type   " + type_AES);
+        Log.i("1", "1   " + type_MAC);
+        Log.i("1", "phone  " + phone_AES);
+        Log.i("1", "1   " + phone_MAC);
+
+        withdrawRequestMessage.setAction(action);
+        withdrawRequestMessage.setActionMAC(action_MAC);
+
+        withdrawRequestMessage.setType(type_AES);
+        withdrawRequestMessage.setTypeMAC(type_MAC);
+
+        withdrawRequestMessage.setSum(sum_AES);
+        withdrawRequestMessage.setSumMAC(sum_MAC);
+
+        withdrawRequestMessage.setPhone(phone_AES);
+        withdrawRequestMessage.setPhoneMAC(phone_MAC);
 
 
+        MoneyService moneyService = retrofit.create(MoneyService.class);
+        Call<WithdrawResponseMessage> call = moneyService.withdraw(withdrawRequestMessage);
 
 
         Response<WithdrawResponseMessage> response = sendResponse(call);
         if (isResponseSuccessful(response)) {
+                WithdrawResponseMessage withdrawResponseMessage = response.body();
+            if (chekcMAC_MAC(withdrawResponseMessage.getKeyMACMAC(), withdrawResponseMessage.getKeyMAC())) {
 
+                String KeyMAC_real = FirstStep2.decrypt(withdrawResponseMessage.getKeyMAC(), ApplicationContext.getKeyAES());
+                ApplicationContext.setKeyMAC(KeyMAC_real);
+
+                ApplicationContext.sequensePlus();
+                Toast.makeText(ApplicationContext.getContext(),withdrawResponseMessage.getMsg(),Toast.LENGTH_LONG).show();
+
+            }
 
 
 
         }else{
             MyAlertDialogFragment.createAndShowErrorDialog("Возникла ошибка в процессе попытки вывода средств");
         }
-//        call.enqueue(new Callback<WithdrawResponseMessage>() {
-//            @Override
-//            public void onResponse(Call<WithdrawResponseMessage> call, Response<WithdrawResponseMessage> response) {
-//
-//                if (!isResponseSuccessful(response)) {
-//                    return;
-//                }
-//
-//                Toast.makeText(getContext(), response.body().getMessage(), Toast.LENGTH_LONG).show();
-//
-//            }
-//
-//            @Override
-//            public void onFailure(Call<WithdrawResponseMessage> call, Throwable t) {
-//                MyAlertDialogFragment.createAndShowErrorDialog("Возникла ошибка в процессе попытки вывода средств");
-//            }
-//        });
+
     }
 
     public List<WithdrawHistoryEntry> getWithdrawHistory() {

@@ -43,11 +43,23 @@ public class PaymentSystemsActivity extends AppCompatActivity implements View.On
                 break;
 
             case R.id.btn_mobile:
+//                Intent toMoneyActivit = new Intent(this, MoneyActivity.class).putExtra("", (String) v.getTag());
+//                startActivity(toMoneyActivit);
+                Toast.makeText(PaymentSystemsActivity.this, "В данный момент функция не доступна", Toast.LENGTH_SHORT).show();
+                break;
             case R.id.btnQiwi:
+                Intent toMoneyActivit1 = new Intent(this, MoneyActivity.class).putExtra("withdrawType", "qiwi" );
+                startActivity(toMoneyActivit1);
+                break;
             case R.id.btnWm:
+//                Intent toMoneyActivit2 = new Intent(this, MoneyActivity.class).putExtra("", (String) v.getTag());
+//                startActivity(toMoneyActivit2);
+                Toast.makeText(PaymentSystemsActivity.this, "В данный момент функция не доступна", Toast.LENGTH_SHORT).show();
+                break;
             case R.id.btnYandex:
-                Intent toMoneyActivit = new Intent(this, MoneyActivity.class).putExtra("withdrawType", (String) v.getTag());
-                startActivity(toMoneyActivit);
+//                Intent toMoneyActivit3 = new Intent(this, MoneyActivity.class).putExtra("", (String) v.getTag());
+//                startActivity(toMoneyActivit3);
+                Toast.makeText(PaymentSystemsActivity.this, "В данный момент функция не доступна", Toast.LENGTH_SHORT).show();
                 break;
 
         }

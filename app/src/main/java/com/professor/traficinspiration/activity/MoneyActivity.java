@@ -87,6 +87,11 @@ public class MoneyActivity extends AppCompatActivity implements View.OnClickList
                     return;
                 }
 
+//                if (amountString.equals("")) {
+//                    Toast.makeText(MoneyActivity.this, "f", Toast.LENGTH_SHORT).show();
+//                    return;
+//                }
+
                 int amount = Integer.parseInt(amountString);
 //                long number = Long.parseLong(numberString);
 
